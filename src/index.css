@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* AmbuConnect Medical Emergency Color Scheme */
+    --background: 99% 0 0;
+    --foreground: 10% 0 0;
+    --card: 100% 0 0;
+    --card-foreground: 10% 0 0;
+    --popover: 100% 0 0;
+    --popover-foreground: 10% 0 0;
+    --primary: 0 84.2% 60.2%;
+    --primary-foreground: 100% 0 0;
+    --secondary: 95% 0.01 0;
+    --secondary-foreground: 10% 0 0;
+    --muted: 93% 0 0;
+    --muted-foreground: 50% 0 0;
+    --accent: 0 84.2% 60.2%;
+    --accent-foreground: 100% 0 0;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 100% 0 0;
+    --border: 90% 0 0;
+    --input: 96% 0 0;
+    --ring: 0 84.2% 60.2%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 12% 0 0;
+    --foreground: 95% 0 0;
+    --card: 15% 0 0;
+    --card-foreground: 95% 0 0;
+    --popover: 15% 0 0;
+    --popover-foreground: 95% 0 0;
+    --primary: 0 84.2% 60.2%;
+    --primary-foreground: 100% 0 0;
+    --secondary: 25% 0 0;
+    --secondary-foreground: 95% 0 0;
+    --muted: 30% 0 0;
+    --muted-foreground: 65% 0 0;
+    --accent: 0 84.2% 60.2%;
+    --accent-foreground: 100% 0 0;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 100% 0 0;
+    --border: 25% 0 0;
+    --input: 20% 0 0;
+    --ring: 0 84.2% 60.2%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
