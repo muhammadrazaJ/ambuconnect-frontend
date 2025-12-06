@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, Phone, Loader2, ArrowRight, CheckCircle } from 'lucide-react';
+import { User, Mail, Lock, Phone, Loader2, ArrowRight, CheckCircle, Shield } from 'lucide-react';
 import { auth, RegisterData } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +11,7 @@ const RegisterForm: React.FC = () => {
     phone: '',
     password: '',
     confirmPassword: '',
+    role: '', // Added role field
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,12 +22,22 @@ const RegisterForm: React.FC = () => {
     setError(null);
   };
 
+  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData({ ...formData, role: e.target.value });
+    setError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
+      // Validate role selection
+      if (!formData.role) {
+        throw new Error('Please select a role');
+      }
+
       if (formData.password !== formData.confirmPassword) {
         throw new Error('Passwords do not match');
       }
@@ -108,6 +119,31 @@ const RegisterForm: React.FC = () => {
               required
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-10 focus:ring-2 focus:ring-primary focus:outline-none"
             />
+          </div>
+        </div>
+
+        {/* Role Selection Dropdown */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">Select Role</label>
+          <div className="relative">
+            <Shield className="absolute left-3 top-3 h-5 w-5 text-muted-foreground pointer-events-none" />
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleRoleChange}
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-10 pr-8 focus:ring-2 focus:ring-primary focus:outline-none appearance-none cursor-pointer"
+            >
+              <option value="" disabled>Choose your role...</option>
+              <option value="PATIENT">Patient</option>
+              <option value="DRIVER">Driver</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+            <div className="absolute right-3 top-3 pointer-events-none">
+              <svg className="h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </div>
           </div>
         </div>
 
