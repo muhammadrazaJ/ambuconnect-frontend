@@ -1,175 +1,136 @@
-"use client"
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
+import { auth, LoginData } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
-import type React from "react"
-import api from "../services/api"; // <-- add this at top
-
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { AlertCircle, Loader2, CheckCircle } from "lucide-react"
-
-interface FormData {
-  email: string
-  password: string
-}
-
-interface FormErrors {
-  email?: string
-  password?: string
-  general?: string
-}
-
-export default function LoginForm() {
-  const navigate = useNavigate()
-  const [formData, setFormData] = useState<FormData>({
-    email: "",
-    password: "",
-  })
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [isLoading, setIsLoading] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
-
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!formData.email) {
-      newErrors.email = "Email is required"
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Please enter a valid email"
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Password is required"
-    } else if (formData.password.length < 1) {
-      newErrors.password = "Password is invalid"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+const LoginForm: React.FC = () => {
+  const [formData, setFormData] = useState<LoginData>({
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }))
-    }
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(null);
+  };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    if (!validateForm()) {
-      return
-    }
-
-    setIsLoading(true)
-    setErrors({})
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const response = await api.post("/api/auth/login", {
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-        setSuccessMessage("Login successful! Redirecting...");
-        setTimeout(() => navigate("/dashboard"), 1500);
-      } else {
-        setErrors({ general: "Invalid login response" });
+      if (!formData.email || !formData.password) {
+        throw new Error('Please fill in all fields');
       }
-    } catch (error: any) {
-      setErrors({
-        general: error.response?.data?.message || "Login failed. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+      const response = await auth.login(formData);
+      // Assuming setAuthToken is handled inside auth.login or we do it here if api returns token
+      // logic in api.ts doesn't auto-set token in localStorage inside the login function itself, 
+      // but the requirement said "On success: Save JWT in localStorage".
+      // My api.ts helper setAuthToken does that.
+      // So I should import setAuthToken and call it here, or modify api.ts.
+      // Let's call it here.
+      const { setAuthToken } = await import('../services/api');
+      setAuthToken(response.token);
 
-  }
+      navigate('/');
+    } catch (err: any) {
+      // axios error structure
+      const msg = err.response?.data?.message || err.message || 'Login failed';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* General Error */}
-      {errors.general && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700">{errors.general}</p>
-        </div>
-      )}
-
-      {/* Success Message */}
-      {successMessage && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-green-700">{successMessage}</p>
-        </div>
-      )}
-
-      {/* Email */}
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-          Email Address
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="Enter your email"
-          value={formData.email}
-          onChange={handleChange}
-          disabled={isLoading}
-          className={`w-full px-3 py-2 border rounded-lg bg-input text-foreground placeholder-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50 ${
-            errors.email ? "border-red-500 focus:ring-red-500" : "border-border"
-          }`}
-        />
-        {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-md p-8 bg-card rounded-2xl shadow-xl border border-border"
+    >
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-primary mb-2">Welcome Back</h2>
+        <p className="text-muted-foreground">Sign in to access your dashboard</p>
       </div>
 
-      {/* Password */}
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="Enter your password"
-          value={formData.password}
-          onChange={handleChange}
-          disabled={isLoading}
-          className={`w-full px-3 py-2 border rounded-lg bg-input text-foreground placeholder-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50 ${
-            errors.password ? "border-red-500 focus:ring-red-500" : "border-border"
-          }`}
-        />
-        {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
-      </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
+            />
+          </div>
+        </div>
 
-      {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Signing In...
-          </>
-        ) : (
-          "Sign In"
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center space-x-2">
+            <input type="checkbox" id="remember" className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4" />
+            <label htmlFor="remember" className="font-medium text-foreground">Remember me</label>
+          </div>
+          <a href="#" className="font-medium text-primary hover:text-primary/80">Forgot password?</a>
+        </div>
+
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="text-red-500 text-sm bg-red-50 p-2 rounded-md border border-red-200"
+          >
+            {error}
+          </motion.div>
         )}
-      </button>
-    </form>
-  )
-}
+
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          type="submit"
+          disabled={loading}
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <span className="flex items-center">Sign In <ArrowRight className="ml-2 h-4 w-4" /></span>}
+        </motion.button>
+      </form>
+
+      <div className="mt-6 text-center text-sm">
+        <span className="text-muted-foreground">Don't have an account? </span>
+        <a href="/register" className="font-medium text-primary hover:text-primary/80">
+          Register
+        </a>
+      </div>
+    </motion.div>
+  );
+};
+
+export default LoginForm;

@@ -1,44 +1,48 @@
-import LoginForm from "../components/LoginForm"
+import React from 'react';
+import LoginForm from '../components/LoginForm';
+import { motion } from 'framer-motion';
+import { Ambulance } from 'lucide-react';
 
-export default function LoginPage() {
+const LoginPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-xl">🚑</span>
-            </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/5 rounded-bl-full z-0"></div>
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-secondary/5 rounded-tr-full z-0"></div>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-secondary/5 rounded-full blur-3xl"
+        />
+      </div>
+
+      <div className="z-10 w-full max-w-lg px-4 flex flex-col items-center">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex items-center gap-2 mb-8"
+        >
+          <div className="p-3 bg-primary/10 rounded-full">
+            <Ambulance className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">AmbuConnect</h1>
-          <p className="text-muted-foreground">Fast emergency response at your service</p>
-        </div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">AmbuConnect</h1>
+        </motion.div>
 
-        {/* Login Card */}
-        <div className="bg-card border border-border rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-6 text-center">Sign In</h2>
+        <LoginForm />
 
-          <LoginForm />
-
-          {/* Register Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <a href="/register" className="text-red-600 hover:text-red-700 font-semibold transition-colors">
-                Register here
-              </a>
-            </p>
-          </div>
-        </div>
-
-        {/* Trust Badge */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">
-            <span>🔒</span> Secure login with encrypted connection
-          </p>
+        <div className="mt-8 text-center text-sm text-muted-foreground">
+          <p>&copy; {new Date().getFullYear()} AmbuConnect. Emergency Services.</p>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default LoginPage;

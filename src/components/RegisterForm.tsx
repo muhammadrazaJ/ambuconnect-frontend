@@ -1,283 +1,178 @@
-"use client"
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { User, Mail, Lock, Phone, Loader2, ArrowRight, CheckCircle } from 'lucide-react';
+import { auth, RegisterData } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
-import type React from "react"
-
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { AlertCircle, Loader2, CheckCircle } from "lucide-react"
-
-interface FormData {
-  name: string
-  email: string
-  phone: string
-  password: string
-  confirmPassword: string
-}
-
-interface FormErrors {
-  name?: string
-  email?: string
-  phone?: string
-  password?: string
-  confirmPassword?: string
-  general?: string
-}
-
-export default function RegisterForm() {
-  const navigate = useNavigate()
-  const [formData, setFormData] = useState<FormData>({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  })
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [isLoading, setIsLoading] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
-
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    // Name validation
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required"
-    } else if (formData.name.length < 2) {
-      newErrors.name = "Name must be at least 2 characters"
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!formData.email) {
-      newErrors.email = "Email is required"
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Please enter a valid email"
-    }
-
-    // Phone validation
-    const phoneRegex = /^[0-9\s\-+$$]{10,}$/
-    if (!formData.phone) {
-      newErrors.phone = "Phone number is required"
-    } else if (!phoneRegex.test(formData.phone.replace(/\s/g, ""))) {
-      newErrors.phone = "Please enter a valid phone number"
-    }
-
-    // Password validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-    if (!formData.password) {
-      newErrors.password = "Password is required"
-    } else if (!passwordRegex.test(formData.password)) {
-      newErrors.password =
-        "Password must be at least 8 characters with uppercase, lowercase, number, and special character"
-    }
-
-    // Confirm password validation
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+const RegisterForm: React.FC = () => {
+  const [formData, setFormData] = useState<RegisterData & { confirmPassword: '' }>({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }))
-    }
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(null);
+  };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    if (!validateForm()) {
-      return
-    }
-
-    setIsLoading(true)
-    setErrors({})
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setErrors({
-          general: data.message || "Registration failed. Please try again.",
-        })
-        return
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+      if (formData.password.length < 6) {
+        throw new Error('Password must be at least 6 characters');
       }
 
-      // Success
-      setSuccessMessage("Account created successfully! Redirecting...")
-      setTimeout(() => {
-        navigate("/login")
-      }, 2000)
-    } catch (error) {
-      setErrors({
-        general: "An error occurred. Please try again later.",
-      })
-      console.error("Registration error:", error)
+      // Exclude confirmPassword from API call
+      const { confirmPassword, ...apiData } = formData;
+      const response = await auth.register(apiData);
+
+      const { setAuthToken } = await import('../services/api');
+      setAuthToken(response.token);
+
+      navigate('/');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Registration failed';
+      setError(msg);
     } finally {
-      setIsLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* General Error */}
-      {errors.general && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700">{errors.general}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-md p-8 bg-card rounded-2xl shadow-xl border border-border"
+    >
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-primary mb-2">Create Account</h2>
+        <p className="text-muted-foreground">Join AmbuConnect today</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">Full Name</label>
+          <div className="relative">
+            <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="John Doe"
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-10 focus:ring-2 focus:ring-primary focus:outline-none"
+            />
+          </div>
         </div>
-      )}
 
-      {/* Success Message */}
-      {successMessage && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-green-700">{successMessage}</p>
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">Email</label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="john@example.com"
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-10 focus:ring-2 focus:ring-primary focus:outline-none"
+            />
+          </div>
         </div>
-      )}
 
-      {/* Full Name */}
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-          Full Name
-        </label>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          placeholder="Enter your full name"
-          value={formData.name}
-          onChange={handleChange}
-          disabled={isLoading}
-          className={`w-full px-3 py-2 border rounded-lg bg-input text-foreground placeholder-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50 ${
-            errors.name ? "border-red-500 focus:ring-red-500" : "border-border"
-          }`}
-        />
-        {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
-      </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">Phone</label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="+1 234 567 8900"
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-10 focus:ring-2 focus:ring-primary focus:outline-none"
+            />
+          </div>
+        </div>
 
-      {/* Email */}
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-          Email Address
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="Enter your email"
-          value={formData.email}
-          onChange={handleChange}
-          disabled={isLoading}
-          className={`w-full px-3 py-2 border rounded-lg bg-input text-foreground placeholder-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50 ${
-            errors.email ? "border-red-500 focus:ring-red-500" : "border-border"
-          }`}
-        />
-        {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
-      </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="******"
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-10 focus:ring-2 focus:ring-primary focus:outline-none"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none">Confirm</label>
+            <div className="relative">
+              <CheckCircle className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="******"
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-10 focus:ring-2 focus:ring-primary focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
 
-      {/* Phone */}
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-2">
-          Phone Number
-        </label>
-        <input
-          id="phone"
-          name="phone"
-          type="tel"
-          placeholder="Enter your phone number"
-          value={formData.phone}
-          onChange={handleChange}
-          disabled={isLoading}
-          className={`w-full px-3 py-2 border rounded-lg bg-input text-foreground placeholder-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50 ${
-            errors.phone ? "border-red-500 focus:ring-red-500" : "border-border"
-          }`}
-        />
-        {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone}</p>}
-      </div>
-
-      {/* Password */}
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="Enter your password"
-          value={formData.password}
-          onChange={handleChange}
-          disabled={isLoading}
-          className={`w-full px-3 py-2 border rounded-lg bg-input text-foreground placeholder-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50 ${
-            errors.password ? "border-red-500 focus:ring-red-500" : "border-border"
-          }`}
-        />
-        {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
-        <p className="text-xs text-muted-foreground mt-1">
-          At least 8 characters with uppercase, lowercase, number, and special character
-        </p>
-      </div>
-
-      {/* Confirm Password */}
-      <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
-          Confirm Password
-        </label>
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          placeholder="Re-enter your password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          disabled={isLoading}
-          className={`w-full px-3 py-2 border rounded-lg bg-input text-foreground placeholder-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50 ${
-            errors.confirmPassword ? "border-red-500 focus:ring-red-500" : "border-border"
-          }`}
-        />
-        {errors.confirmPassword && <p className="text-sm text-red-600 mt-1">{errors.confirmPassword}</p>}
-      </div>
-
-      {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Creating Account...
-          </>
-        ) : (
-          "Create Account"
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="text-red-500 text-sm bg-red-50 p-2 rounded-md border border-red-200"
+          >
+            {error}
+          </motion.div>
         )}
-      </button>
-    </form>
-  )
-}
+
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          type="submit"
+          disabled={loading}
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <span className="flex items-center">Create Account <ArrowRight className="ml-2 h-4 w-4" /></span>}
+        </motion.button>
+      </form>
+
+      <div className="mt-6 text-center text-sm">
+        <span className="text-muted-foreground">Already have an account? </span>
+        <a href="/login" className="font-medium text-primary hover:text-primary/80">
+          Sign In
+        </a>
+      </div>
+    </motion.div>
+  );
+};
+
+export default RegisterForm;
