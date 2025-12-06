@@ -8,8 +8,18 @@ const RegisterPage: React.FC = () => {
     <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden py-12">
       {/* Background Decor */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 left-0 w-1/3 h-1/3 bg-secondary/5 rounded-br-full z-0"></div>
-        <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-primary/5 rounded-tl-full z-0"></div>
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/5 rounded-bl-full z-0"></div>
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-secondary/5 rounded-tr-full z-0"></div>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-secondary/5 rounded-full blur-3xl"
+        />
       </div>
 
       <div className="z-10 w-full max-w-lg px-4 flex flex-col items-center">
