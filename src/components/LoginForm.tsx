@@ -27,15 +27,8 @@ const LoginForm: React.FC = () => {
       if (!formData.email || !formData.password) {
         throw new Error('Please fill in all fields');
       }
-      const response = await auth.login(formData);
-      // Assuming setAuthToken is handled inside auth.login or we do it here if api returns token
-      // logic in api.ts doesn't auto-set token in localStorage inside the login function itself, 
-      // but the requirement said "On success: Save JWT in localStorage".
-      // My api.ts helper setAuthToken does that.
-      // So I should import setAuthToken and call it here, or modify api.ts.
-      // Let's call it here.
-      const { setAuthToken } = await import('../services/api');
-      setAuthToken(response.token);
+      
+      await auth.login(formData);
 
       navigate('/');
     } catch (err: any) {

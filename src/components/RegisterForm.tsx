@@ -47,12 +47,11 @@ const RegisterForm: React.FC = () => {
 
       // Exclude confirmPassword from API call
       const { confirmPassword, ...apiData } = formData;
-      const response = await auth.register(apiData);
+      await auth.register(apiData);
 
-      const { setAuthToken } = await import('../services/api');
-      setAuthToken(response.token);
+      // Redirect to login page after successful registration
+      navigate('/login');
 
-      navigate('/');
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Registration failed';
       setError(msg);
@@ -115,7 +114,7 @@ const RegisterForm: React.FC = () => {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="+1 234 567 8900"
+              placeholder="03001234567"
               required
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-10 focus:ring-2 focus:ring-primary focus:outline-none"
             />
