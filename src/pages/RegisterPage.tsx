@@ -1,3 +1,4 @@
+//RegisterPage.tsx
 import React from 'react';
 import RegisterForm from '../components/RegisterForm';
 import { motion } from 'framer-motion';
