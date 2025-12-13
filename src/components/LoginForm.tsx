@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { auth, LoginData } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 const LoginForm: React.FC = () => {
   const [formData, setFormData] = useState<LoginData>({
@@ -29,11 +30,19 @@ const LoginForm: React.FC = () => {
         throw new Error('Please fill in all fields');
       }
       
+      // Login first
       await auth.login(formData);
 
-      navigate('/');
+      // Fetch user role
+      const userResponse = await api.get('/auth/me');
+      
+      const userRole = userResponse.data.role;
+
+      if (userRole === 'PATIENT') {
+        navigate('/patient/dashboard'); 
+      }
+
     } catch (err: any) {
-      // axios error structure
       const msg = err.response?.data?.message || err.message || 'Login failed';
       setError(msg);
     } finally {

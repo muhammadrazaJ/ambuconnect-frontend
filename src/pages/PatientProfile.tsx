@@ -72,7 +72,7 @@ const PatientProfile: React.FC = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/patient/dashboard')}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ArrowLeft className="w-5 h-5" />

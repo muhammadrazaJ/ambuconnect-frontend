@@ -31,7 +31,7 @@ function App() {
         
         {/* Protected Routes */}
         <Route 
-          path="/dashboard" 
+          path="/patient/dashboard" 
           element={
             <ProtectedRoute>
               <PatientDashboard />
